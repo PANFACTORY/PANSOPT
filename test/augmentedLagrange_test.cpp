@@ -16,8 +16,9 @@ TEST(AugmentedLagrangeTest, AugmentedLagrangeTest1) {
         pref = f;
         f = x[0] + x[1];
         g = 1 - (x[0] * x[0] + x[1] * x[1]);
-        std::cout << itr << " " << f << " " << g << " " << x[0] << " " << x[1]
-                  << std::endl;
+        // std::cout << itr << " " << f << " " << g << " " << x[0] << " " <<
+        // x[1]
+        // << std::endl;
         if (itr > 0 && fabs(f - pref) < 1e-6 * fabs(pref) && g < 0) {
             break;
         }
