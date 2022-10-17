@@ -48,8 +48,8 @@ class PrimalDual {
     }
 
     // TODO
-    // xが負の値をとる場合にも対応させる
     // 収束判定を入れる
+    // Box制約を入れる
 
     /**
      * @brief
@@ -67,24 +67,28 @@ class PrimalDual {
                                    const std::vector<std::vector<T>>& _Ai,
                                    const std::vector<T>& _bi) {
         // STEP0
-        std::vector<T> x(this->nx, this->s0), s(this->ni, this->s0),
-            ye(this->ne, T()), yi(this->ni, T()), zx(this->nx, this->s0),
+        std::vector<T> xp(this->nx, this->s0), xn(this->nx, this->s0),
+            s(this->ni, this->s0), ye(this->ne, T()), yi(this->ni, T()),
+            zxp(this->nx, this->s0), zxn(this->nx, this->s0),
             zs(this->ni, this->s0);
-        std::vector<T> rpe(this->ne), rpi(this->ni), rdx(this->nx),
-            rds(this->ni), rcx(this->nx), rcs(this->ni);
+        std::vector<T> rpe(this->ne), rpi(this->ni), rdxp(this->nx),
+            rdxn(this->nx), rds(this->ni), rcxp(this->nx), rcxn(this->nx),
+            rcs(this->ni);
         std::vector<std::vector<T>> B(this->ne + this->ni,
                                       std::vector<T>(this->ne + this->ni));
         std::vector<T> ss(this->ne + this->ni);
-        std::vector<T> dx(this->nx), ds(this->ni), dy(this->ne + this->ni),
-            dye(this->ne), dyi(this->ni), dzx(this->nx), dzs(this->ni);
-        T mu = (std::inner_product(x.begin(), x.end(), zx.begin(), T()) +
+        std::vector<T> dxp(this->nx), dxn(this->nx), ds(this->ni),
+            dy(this->ne + this->ni), dye(this->ne), dyi(this->ni),
+            dzxp(this->nx), dzxn(this->nx), dzs(this->ni);
+        T mu = (std::inner_product(xp.begin(), xp.end(), zxp.begin(), T()) +
+                std::inner_product(xn.begin(), xn.end(), zxn.begin(), T()) +
                 std::inner_product(s.begin(), s.end(), zs.begin(), T())) /
-               T(this->nx + this->ni);
+               T(2 * this->nx + this->ni);
 
         for (int itr = 0; itr < 20; ++itr) {
             std::cout << itr;
             for (int j = 0; j < this->nx; ++j) {
-                std::cout << " " << x[j];
+                std::cout << " " << xp[j] - xn[j];
             }
             for (int j = 0; j < this->ni; ++j) {
                 std::cout << " " << s[j];
@@ -96,23 +100,32 @@ class PrimalDual {
             for (int i = 0; i < this->ne; ++i) {
                 rpe[i] = _be[i];
                 for (int j = 0; j < this->nx; ++j) {
-                    rpe[i] -= _Ae[i][j] * x[j];
+                    rpe[i] -= _Ae[i][j] * (xp[j] - xn[j]);
                 }
             }
             for (int i = 0; i < this->ni; ++i) {
                 rpi[i] = _bi[i] - s[i];
                 for (int j = 0; j < this->nx; ++j) {
-                    rpi[i] -= _Ai[i][j] * x[j];
+                    rpi[i] -= _Ai[i][j] * (xp[j] - xn[j]);
                 }
             }
             // rd
             for (int j = 0; j < this->nx; ++j) {
-                rdx[j] = _c[j] - zx[j];
+                rdxp[j] = _c[j] - zxp[j];
                 for (int i = 0; i < this->ne; ++i) {
-                    rdx[j] -= _Ae[i][j] * ye[i];
+                    rdxp[j] -= _Ae[i][j] * ye[i];
                 }
                 for (int i = 0; i < this->ni; ++i) {
-                    rdx[j] -= _Ai[i][j] * yi[i];
+                    rdxp[j] -= _Ai[i][j] * yi[i];
+                }
+            }
+            for (int j = 0; j < this->nx; ++j) {
+                rdxn[j] = -_c[j] - zxn[j];
+                for (int i = 0; i < this->ne; ++i) {
+                    rdxn[j] += _Ae[i][j] * ye[i];
+                }
+                for (int i = 0; i < this->ni; ++i) {
+                    rdxn[j] += _Ai[i][j] * yi[i];
                 }
             }
             for (int j = 0; j < this->ni; ++j) {
@@ -120,7 +133,10 @@ class PrimalDual {
             }
             // rc
             for (int j = 0; j < this->nx; ++j) {
-                rcx[j] = this->sigma * mu - x[j] * zx[j];
+                rcxp[j] = this->sigma * mu - xp[j] * zxp[j];
+            }
+            for (int j = 0; j < this->nx; ++j) {
+                rcxn[j] = this->sigma * mu - xn[j] * zxn[j];
             }
             for (int j = 0; j < this->ni; ++j) {
                 rcs[j] = this->sigma * mu - s[j] * zs[j];
@@ -132,14 +148,17 @@ class PrimalDual {
                 for (int k = 0; k < this->ne; ++k) {
                     B[i][k] = T();
                     for (int j = 0; j < this->nx; ++j) {
-                        B[i][k] += _Ae[i][j] / zx[j] * x[j] * _Ae[k][j];
+                        B[i][k] += _Ae[i][j] *
+                                   (xp[j] / zxp[j] + xn[j] / zxn[j]) *
+                                   _Ae[k][j];
                     }
                 }
                 for (int k = 0; k < this->ni; ++k) {
                     B[i][k + this->ne] = T();
                     for (int j = 0; j < this->nx; ++j) {
                         B[i][k + this->ne] +=
-                            _Ae[i][j] / zx[j] * x[j] * _Ai[k][j];
+                            _Ae[i][j] * (xp[j] / zxp[j] + xn[j] / zxn[j]) *
+                            _Ai[k][j];
                     }
                 }
             }
@@ -148,14 +167,16 @@ class PrimalDual {
                     B[i + this->ne][k] = T();
                     for (int j = 0; j < this->nx; ++j) {
                         B[i + this->ne][k] +=
-                            _Ai[i][j] / zx[j] * x[j] * _Ae[k][j];
+                            _Ai[i][j] * (xp[j] / zxp[j] + xn[j] / zxn[j]) *
+                            _Ae[k][j];
                     }
                 }
                 for (int k = 0; k < this->ni; ++k) {
                     B[i + this->ne][k + this->ne] = T();
                     for (int j = 0; j < this->nx; ++j) {
                         B[i + this->ne][k + this->ne] +=
-                            _Ai[i][j] / zx[j] * x[j] * _Ai[k][j];
+                            _Ai[i][j] * (xp[j] / zxp[j] + xn[j] / zxn[j]) *
+                            _Ai[k][j];
                     }
                     if (i == k) {
                         B[i + this->ne][k + this->ne] += s[k] / zs[k];
@@ -166,14 +187,16 @@ class PrimalDual {
             for (int i = 0; i < this->ne; ++i) {
                 ss[i] = rpe[i];
                 for (int j = 0; j < this->nx; ++j) {
-                    ss[i] -= _Ae[i][j] * (rcx[j] - x[j] * rdx[j]) / zx[j];
+                    ss[i] -= _Ae[i][j] * ((rcxp[j] - xp[j] * rdxp[j]) / zxp[j] -
+                                          (rcxn[j] - xn[j] * rdxn[j]) / zxn[j]);
                 }
             }
             for (int i = 0; i < this->ni; ++i) {
                 ss[i + this->ne] = rpi[i] - (rcs[i] - s[i] * rds[i]) / zs[i];
                 for (int j = 0; j < this->nx; ++j) {
                     ss[i + this->ne] -=
-                        _Ai[i][j] * (rcx[j] - x[j] * rdx[j]) / zx[j];
+                        _Ai[i][j] * ((rcxp[j] - xp[j] * rdxp[j]) / zxp[j] -
+                                     (rcxn[j] - xn[j] * rdxn[j]) / zxn[j]);
                 }
             }
             // dy
@@ -186,12 +209,21 @@ class PrimalDual {
             }
             // dz
             for (int j = 0; j < this->nx; ++j) {
-                dzx[j] = rdx[j];
+                dzxp[j] = rdxp[j];
                 for (int i = 0; i < this->ne; ++i) {
-                    dzx[j] -= _Ae[i][j] * dye[i];
+                    dzxp[j] -= _Ae[i][j] * dye[i];
                 }
                 for (int i = 0; i < this->ni; ++i) {
-                    dzx[j] -= _Ai[i][j] * dyi[i];
+                    dzxp[j] -= _Ai[i][j] * dyi[i];
+                }
+            }
+            for (int j = 0; j < this->nx; ++j) {
+                dzxn[j] = rdxn[j];
+                for (int i = 0; i < this->ne; ++i) {
+                    dzxn[j] += _Ae[i][j] * dye[i];
+                }
+                for (int i = 0; i < this->ni; ++i) {
+                    dzxn[j] += _Ai[i][j] * dyi[i];
                 }
             }
             for (int j = 0; j < this->ni; ++j) {
@@ -199,17 +231,26 @@ class PrimalDual {
             }
             // dx
             for (int j = 0; j < this->nx; ++j) {
-                dx[j] = (rcx[j] - x[j] * dzx[j]) / zx[j];
+                dxp[j] = (rcxp[j] - xp[j] * dzxp[j]) / zxp[j];
+            }
+            for (int j = 0; j < this->nx; ++j) {
+                dxn[j] = (rcxn[j] - xn[j] * dzxn[j]) / zxn[j];
             }
             for (int j = 0; j < this->ni; ++j) {
                 ds[j] = (rcs[j] - s[j] * dzs[j]) / zs[j];
             }
 
             // STEP3
-            T alphapx = 1 / this->tau;
+            T alphapxp = 1 / this->tau;
             for (int j = 0; j < this->nx; ++j) {
-                if (dx[j] < T() && -x[j] / dx[j] < alphapx) {
-                    alphapx = -x[j] / dx[j];
+                if (dxp[j] < T() && -xp[j] / dxp[j] < alphapxp) {
+                    alphapxp = -xp[j] / dxp[j];
+                }
+            }
+            T alphapxn = 1 / this->tau;
+            for (int j = 0; j < this->nx; ++j) {
+                if (dxn[j] < T() && -xn[j] / dxn[j] < alphapxn) {
+                    alphapxn = -xn[j] / dxn[j];
                 }
             }
             T alphaps = 1 / this->tau;
@@ -218,10 +259,16 @@ class PrimalDual {
                     alphaps = -s[j] / ds[j];
                 }
             }
-            T alphadx = 1 / this->tau;
+            T alphadxp = 1 / this->tau;
             for (int j = 0; j < this->nx; ++j) {
-                if (dzx[j] < T() && -zx[j] / dzx[j] < alphadx) {
-                    alphadx = -zx[j] / dzx[j];
+                if (dzxp[j] < T() && -zxp[j] / dzxp[j] < alphadxp) {
+                    alphadxp = -zxp[j] / dzxp[j];
+                }
+            }
+            T alphadxn = 1 / this->tau;
+            for (int j = 0; j < this->nx; ++j) {
+                if (dzxn[j] < T() && -zxn[j] / dzxn[j] < alphadxn) {
+                    alphadxn = -zxn[j] / dzxn[j];
                 }
             }
             T alphads = 1 / this->tau;
@@ -230,12 +277,15 @@ class PrimalDual {
                     alphads = -zs[j] / dzs[j];
                 }
             }
-            T alpha =
-                this->tau * std::min({alphapx, alphaps, alphadx, alphads});
+            T alpha = this->tau * std::min({alphapxp, alphapxn, alphaps,
+                                            alphadxp, alphadxn, alphads});
 
             // STEP4
             for (int j = 0; j < this->nx; ++j) {
-                x[j] += alpha * dx[j];
+                xp[j] += alpha * dxp[j];
+            }
+            for (int j = 0; j < this->nx; ++j) {
+                xn[j] += alpha * dxn[j];
             }
             for (int j = 0; j < this->ni; ++j) {
                 s[j] += alpha * ds[j];
@@ -247,14 +297,22 @@ class PrimalDual {
                 yi[i] += alpha * dyi[i];
             }
             for (int j = 0; j < this->nx; ++j) {
-                zx[j] += alpha * dzx[j];
+                zxp[j] += alpha * dzxp[j];
+            }
+            for (int j = 0; j < this->nx; ++j) {
+                zxn[j] += alpha * dzxn[j];
             }
             for (int j = 0; j < this->ni; ++j) {
                 zs[j] += alpha * dzs[j];
             }
-            mu = (std::inner_product(x.begin(), x.end(), zx.begin(), T()) +
+            mu = (std::inner_product(xp.begin(), xp.end(), zxp.begin(), T()) +
+                  std::inner_product(xn.begin(), xn.end(), zxn.begin(), T()) +
                   std::inner_product(s.begin(), s.end(), zs.begin(), T())) /
-                 T(this->nx + this->ni);
+                 T(2 * this->nx + this->ni);
+        }
+        std::vector<T> x(this->nx);
+        for (int i = 0; i < this->nx; ++i) {
+            x[i] = xp[i] - xn[i];
         }
         return x;
     }
