@@ -8,12 +8,14 @@ TEST(PrimalDual2Test, InequalityConstraint1) {
     PrimalDual2<double> optimizer(2, 0, 1);
     std::vector<double> x = optimizer.UpdateVariables(
         {-1, 1}, {{}}, {}, {{1, 1}}, {2}, {-1, 0}, {1, 3});
-    // x1=1, x2=0
+    ASSERT_LE(fabs(x[0] - 1), 1e-9);
+    ASSERT_LE(fabs(x[1] - 0), 1e-9);
 }
 
 TEST(PrimalDual2Test, InequalityConstraint2) {
     PrimalDual2<double> optimizer(2, 1, 0);
     std::vector<double> x = optimizer.UpdateVariables({1, -1}, {{1, 1}}, {2},
                                                       {{}}, {}, {0, 0}, {1, 3});
-    // x1=0, x2=2
+    ASSERT_LE(fabs(x[0] - 0), 1e-9);
+    ASSERT_LE(fabs(x[1] - 2), 1e-9);
 }

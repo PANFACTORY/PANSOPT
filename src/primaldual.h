@@ -48,8 +48,7 @@ class PrimalDual {
     }
 
     // TODO
-    // 収束判定を入れる
-    // Box制約を入れる
+    // TODO: 収束判定の閾値と反復回数のパラメータ化
 
     /**
      * @brief
@@ -85,16 +84,7 @@ class PrimalDual {
                 std::inner_product(s.begin(), s.end(), zs.begin(), T())) /
                T(2 * this->nx + this->ni);
 
-        for (int itr = 0; itr < 20; ++itr) {
-            std::cout << itr;
-            for (int j = 0; j < this->nx; ++j) {
-                std::cout << " " << xp[j] - xn[j];
-            }
-            for (int j = 0; j < this->ni; ++j) {
-                std::cout << " " << s[j];
-            }
-            std::cout << std::endl;
-
+        for (int itr = 0; itr < 30; ++itr) {
             // STEP1
             // rp
             for (int i = 0; i < this->ne; ++i) {
@@ -140,6 +130,45 @@ class PrimalDual {
             }
             for (int j = 0; j < this->ni; ++j) {
                 rcs[j] = this->sigma * mu - s[j] * zs[j];
+            }
+
+            // Check convergence
+            T norm_rpe = rpe.size() > 0
+                             ? *std::max_element(rpe.begin(), rpe.end(),
+                                                 PrimalDual<T>::comp)
+                             : T();
+            T norm_rpi = rpi.size() > 0
+                             ? *std::max_element(rpi.begin(), rpi.end(),
+                                                 PrimalDual<T>::comp)
+                             : T();
+            T norm_rdxp = rdxp.size() > 0
+                              ? *std::max_element(rdxp.begin(), rdxp.end(),
+                                                  PrimalDual<T>::comp)
+                              : T();
+            T norm_rdxn = rdxn.size() > 0
+                              ? *std::max_element(rdxn.begin(), rdxn.end(),
+                                                  PrimalDual<T>::comp)
+                              : T();
+            T norm_rds = rds.size() > 0
+                             ? *std::max_element(rds.begin(), rds.end(),
+                                                 PrimalDual<T>::comp)
+                             : T();
+            T norm_rcxp = rcxp.size() > 0
+                              ? *std::max_element(rcxp.begin(), rcxp.end(),
+                                                  PrimalDual<T>::comp)
+                              : T();
+            T norm_rcxn = rcxn.size() > 0
+                              ? *std::max_element(rcxn.begin(), rcxn.end(),
+                                                  PrimalDual<T>::comp)
+                              : T();
+            T norm_rcs = rcs.size() > 0
+                             ? *std::max_element(rcs.begin(), rcs.end(),
+                                                 PrimalDual<T>::comp)
+                             : T();
+            if (std::max({fabs(norm_rpe), fabs(norm_rpi), fabs(norm_rdxp),
+                          fabs(norm_rdxn), fabs(norm_rds), fabs(norm_rcxp),
+                          fabs(norm_rcxn), fabs(norm_rcs)}) < 1e-9) {
+                break;
             }
 
             // STEP2
@@ -200,7 +229,7 @@ class PrimalDual {
                 }
             }
             // dy
-            dy = this->gauss(B, ss);
+            dy = PrimalDual<T>::gauss(B, ss);
             for (int i = 0; i < this->ne; ++i) {
                 dye[i] = dy[i];
             }
@@ -321,7 +350,8 @@ class PrimalDual {
     const int nx, ne, ni;
     T s0, sigma, tau;
 
-    std::vector<T> gauss(std::vector<std::vector<T>> _A, std::vector<T> _b) {
+    static std::vector<T> gauss(std::vector<std::vector<T>> _A,
+                                std::vector<T> _b) {
         for (int i = 0; i < _b.size() - 1; i++) {
             //----------Get pivot----------
             T pivot = fabs(_A[i][i]);
@@ -361,5 +391,7 @@ class PrimalDual {
         }
         return x;
     }
+
+    static bool comp(T _a, T _b) { return fabs(_a) < fabs(_b); }
 };
 }  // namespace PANSOPT

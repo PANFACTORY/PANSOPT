@@ -1,7 +1,6 @@
 #pragma once
 #include <algorithm>
 #include <cmath>
-#include <iostream>
 #include <numeric>
 #include <vector>
 
@@ -21,6 +20,7 @@ class PrimalDual2 {
         this->tau = _tau;
     }
 
+    // TODO: 収束判定の閾値と反復回数のパラメータ化
     std::vector<T> UpdateVariables(const std::vector<T>& _c,
                                    const std::vector<std::vector<T>>& _Ae,
                                    const std::vector<T>& _be,
@@ -47,23 +47,6 @@ class PrimalDual2 {
                T(2 * this->nx + this->ni);
 
         for (int itr = 0; itr < 20; ++itr) {
-            std::cout << itr << " ";
-            T tmp = T();
-            for (int j = 0; j < this->nx; ++j) {
-                tmp += _c[j] * (x[j] + _l[j]);
-            }
-            std::cout << tmp;
-            for (int j = 0; j < this->nx; ++j) {
-                std::cout << " " << x[j] + _l[j];
-            }
-            for (int j = 0; j < this->ni; ++j) {
-                std::cout << " " << s[j];
-            }
-            for (int j = 0; j < this->nx; ++j) {
-                std::cout << " " << t[j];
-            }
-            std::cout << std::endl;
-
             // STEP1
             // rp
             for (int i = 0; i < this->ne; ++i) {
@@ -103,6 +86,45 @@ class PrimalDual2 {
             }
             for (int j = 0; j < this->nx; ++j) {
                 rct[j] = this->sigma * mu - t[j] * zt[j];
+            }
+
+            // Check convergence
+            T norm_rpe = rpe.size() > 0
+                             ? *std::max_element(rpe.begin(), rpe.end(),
+                                                 PrimalDual2<T>::comp)
+                             : T();
+            T norm_rpi = rpi.size() > 0
+                             ? *std::max_element(rpi.begin(), rpi.end(),
+                                                 PrimalDual2<T>::comp)
+                             : T();
+            T norm_rdx = rdx.size() > 0
+                             ? *std::max_element(rdx.begin(), rdx.end(),
+                                                 PrimalDual2<T>::comp)
+                             : T();
+            T norm_rds = rds.size() > 0
+                             ? *std::max_element(rds.begin(), rds.end(),
+                                                 PrimalDual2<T>::comp)
+                             : T();
+            T norm_rdt = rdt.size() > 0
+                             ? *std::max_element(rdt.begin(), rdt.end(),
+                                                 PrimalDual2<T>::comp)
+                             : T();
+            T norm_rcx = rcx.size() > 0
+                             ? *std::max_element(rcx.begin(), rcx.end(),
+                                                 PrimalDual2<T>::comp)
+                             : T();
+            T norm_rcs = rcs.size() > 0
+                             ? *std::max_element(rcs.begin(), rcs.end(),
+                                                 PrimalDual2<T>::comp)
+                             : T();
+            T norm_rct = rct.size() > 0
+                             ? *std::max_element(rct.begin(), rct.end(),
+                                                 PrimalDual2<T>::comp)
+                             : T();
+            if (std::max({fabs(norm_rpe), fabs(norm_rpi), fabs(norm_rdx),
+                          fabs(norm_rds), fabs(norm_rdt), fabs(norm_rcx),
+                          fabs(norm_rcs), fabs(norm_rct)}) < 1e-9) {
+                break;
             }
 
             // STEP2
@@ -167,7 +189,7 @@ class PrimalDual2 {
                 }
             }
             // dy
-            dy = this->gauss(B, ss);
+            dy = PrimalDual2<T>::gauss(B, ss);
             for (int i = 0; i < this->ne; ++i) {
                 dye[i] = dy[i];
             }
@@ -287,7 +309,8 @@ class PrimalDual2 {
     const int nx, ne, ni;
     T s0, sigma, tau;
 
-    std::vector<T> gauss(std::vector<std::vector<T>> _A, std::vector<T> _b) {
+    static std::vector<T> gauss(std::vector<std::vector<T>> _A,
+                                std::vector<T> _b) {
         for (int i = 0; i < _b.size() - 1; i++) {
             //----------Get pivot----------
             T pivot = fabs(_A[i][i]);
@@ -327,5 +350,7 @@ class PrimalDual2 {
         }
         return x;
     }
+
+    static bool comp(T _a, T _b) { return fabs(_a) < fabs(_b); }
 };
 }  // namespace PANSOPT
