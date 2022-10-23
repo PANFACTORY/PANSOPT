@@ -6,7 +6,7 @@ This is a header only library.
 
 | Status |    Environment     |
 | :----: | :----------------: |
-|        | ubuntu-latest(g++) |
+| [![CMake](https://github.com/PANFACTORY/PANSOPT/actions/workflows/cmake.yml/badge.svg)](https://github.com/PANFACTORY/PANSOPT/actions/workflows/cmake.yml) | ubuntu-latest(g++) |
 
 ## Example
 
