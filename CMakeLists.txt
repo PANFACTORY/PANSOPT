@@ -11,7 +11,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 enable_testing()
 
-add_executable(PANSOPTTest test/augmentedLagrange_test.cpp test/primaldual_test.cpp test/primaldual2_test.cpp)
+add_executable(PANSOPTTest test/augmentedLagrange_test.cpp test/primaldual_test.cpp)
 target_link_libraries(PANSOPTTest gtest_main)
 
 include(GoogleTest)

@@ -12,6 +12,22 @@ TEST(PrimalDualTest, InequalityConstraint1) {
     ASSERT_LE(fabs(x[1] - 2), 1e-9);
 }
 
+TEST(PrimalDualTest, InequalityConstraint2) {
+    PrimalDual<double> optimizer(2, 0, 1);
+    std::vector<double> x = optimizer.UpdateVariables(
+        {-1, 1}, {{}}, {}, {{1, 1}}, {2}, {-1, 0}, {1, 3});
+    ASSERT_LE(fabs(x[0] - 1), 1e-9);
+    ASSERT_LE(fabs(x[1] - 0), 1e-9);
+}
+
+TEST(PrimalDualTest, InequalityConstraint3) {
+    PrimalDual<double> optimizer(2, 1, 0);
+    std::vector<double> x = optimizer.UpdateVariables({1, -1}, {{1, 1}}, {2},
+                                                      {{}}, {}, {0, 0}, {1, 3});
+    ASSERT_LE(fabs(x[0] - 0), 1e-9);
+    ASSERT_LE(fabs(x[1] - 2), 1e-9);
+}
+
 TEST(PrimalDualTest, EqualityAndInequality1) {
     PrimalDual<double> optimizer(2, 1, 2);
     std::vector<double> x = optimizer.UpdateVariables(
