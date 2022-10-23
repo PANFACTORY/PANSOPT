@@ -4,14 +4,15 @@ This is a header only library.
 
 ## CI
 
-|                                                                                 Status                                                                                 |    Environment     |
-| :--------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :----------------: |
-| | ubuntu-latest(g++) |
+| Status |    Environment     |
+| :----: | :----------------: |
+|        | ubuntu-latest(g++) |
 
 ## Example
 
 ## Document
-- [Document](https://panfactory.github.io/PANSOPT/)
+- [Primal-Dual Interior Point Method（with Box constraint）](./docs/primaldual2.md)
+- [API Document](https://panfactory.github.io/PANSOPT/)
 
 ## Dependency
 - Google Test
