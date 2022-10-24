@@ -540,7 +540,7 @@ class PrimalDual {
 
     static std::vector<T> gauss(std::vector<std::vector<T>> _A,
                                 std::vector<T> _b) {
-        for (int i = 0; i < _b.size() - 1; i++) {
+        for (int i = 0; i < int(_b.size()) - 1; i++) {
             //----------Get pivot----------
             T pivot = fabs(_A[i][i]);
             int pivoti = i;
@@ -570,7 +570,7 @@ class PrimalDual {
 
         //----------Back substitution----------
         std::vector<T> x(_b.size());
-        for (int i = _b.size() - 1; i >= 0; i--) {
+        for (int i = int(_b.size()) - 1; i >= 0; i--) {
             x[i] = _b[i];
             for (int j = _b.size() - 1; j > i; j--) {
                 x[i] -= x[j] * _A[i][j];
