@@ -43,3 +43,11 @@ TEST(PrimalDualTest, NegativeDesignVariable) {
     ASSERT_LE(fabs(x[0] - 105 / 31.0), 1e-9);
     ASSERT_LE(fabs(x[1] - -85 / 31.0), 1e-9);
 }
+
+TEST(rimalDualTest, Noconstraint1) {
+    PrimalDual<double> optimizer(2, 0, 0);
+    std::vector<double> x =
+        optimizer.UpdateVariables({-1, -1}, {{}}, {}, {{}}, {}, {0, 0}, {1, 1});
+    ASSERT_LE(fabs(x[0] - 1), 1e-9);
+    ASSERT_LE(fabs(x[1] - 1), 1e-9);
+}
