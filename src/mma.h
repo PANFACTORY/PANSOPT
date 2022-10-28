@@ -22,6 +22,11 @@
 #endif
 
 namespace PANSOPT {
+/**
+ * @brief Optimizer based on Method of Moving Asymptotes
+ *
+ * @tparam T Type of variables
+ */
 template <class T>
 class MMA {
    public:
@@ -34,10 +39,10 @@ class MMA {
      *
      * @param _n    Number of design variables
      * @param _m    Number of inequarity constraint
-     * @param _a0
-     * @param _a
-     * @param _c
-     * @param _d
+     * @param _a0   Coefficient in equation(3.1)
+     * @param _a    Coefficient in equation(3.1)
+     * @param _c    Coefficient in equation(3.1)
+     * @param _d    Coefficient in equation(3.1)
      * @param _xmin Minimum value of solution vector
      * @param _xmax Maximum value of solution vector
      */
@@ -72,9 +77,9 @@ class MMA {
     /**
      * @brief Check is convergence
      *
-     * @param _currentf0
-     * @return true
-     * @return false
+     * @param _currentf0    Current objective value
+     * @return true         Convergence objective value
+     * @return false        Not convergence
      */
     bool IsConvergence(T _currentf0) {
         return fabs((_currentf0 - this->previousvalue) /
@@ -84,7 +89,7 @@ class MMA {
     /**
      * @brief Import solver setting from file
      *
-     * @param _fname
+     * @param _fname    File name of setting
      */
     void ImportSetting(std::string _fname) {
         std::ifstream fin(_fname);
@@ -115,7 +120,7 @@ class MMA {
     /**
      * @brief Export solver setting from file
      *
-     * @param _fname
+     * @param _fname    File name of setting
      */
     void ExportSetting(std::string _fname) {
         std::ofstream fout(_fname);
@@ -148,11 +153,11 @@ class MMA {
     /**
      * @brief Update design variables
      *
-     * @param _xk
-     * @param _f
-     * @param _dfdx
-     * @param _g
-     * @param _dgdx
+     * @param _xk   Solution vector at k th step
+     * @param _f    Value of objective
+     * @param _dfdx Derivative vector of objective
+     * @param _g    Value vector of constraints
+     * @param _dgdx Derivative matrix of constraints
      */
     void UpdateVariables(std::vector<T>& _xk, T _f, const std::vector<T>& _dfdx,
                          const std::vector<T>& _g,
@@ -594,28 +599,40 @@ class MMA {
         _xk = x;
     }
 
-    /**
-     * @brief Get KKT norm
-     *
-     * @param _x
-     * @param _y
-     * @param _z
-     * @param _lambda
-     * @param _gsi
-     * @param _ita
-     * @param _mu
-     * @param _zeta
-     * @param _s
-     * @param _eps
-     * @param _p
-     * @param _q
-     * @param _p0
-     * @param _q0
-     * @param _alpha
-     * @param _beta
-     * @param _b
-     * @return T
-     */
+    //----------Parameters for solver----------
+    T epsvalue;  //  Convergence parameter of objective value
+
+    //----------Parameters for MMA----------
+    T raa0;     //  Used in equation(3.3) and (3.4)
+    T albefa;   //  Used in equation(3.6) and (3.7)
+    T move;     //  Used in equation(3.6) and (3.7)
+    T asyinit;  //  Used in equation(3.11)
+    T asydecr;  //  Used in equation(3.13)
+    T asyincr;  //  Used in equation(3.13)
+
+   private:
+    //----------Parameters for solver----------
+    int k;                //  Counter for outer loop
+    const int n;          //  Number of design variables
+    const int m;          //  Number of constraint
+    T previousvalue;      //  Previous function value
+    std::vector<T> xmin;  //  Minimum value of design variable
+    std::vector<T> xmax;  //  Maximum value of design variable
+    std::vector<T> xkm2;  //  k-2 th value of design variable
+    std::vector<T> xkm1;  //  k-1 th value of design variable
+
+    //----------Parameters for MMA----------
+    T a0;              //  Used in equation(3.1)
+    std::vector<T> a;  //  Used in equation(3.1)
+    std::vector<T> c;  //  Used in equation(3.1)
+    std::vector<T> d;  //  Used in equation(3.1)
+    std::vector<T> L;  //  Parameter of asymptotes
+    std::vector<T> U;  //  Parameter of asymptotes
+
+    int IdxAm(int _i, int _j) const { return (this->m + 1) * _i + _j; }
+    int IdxAn(int _i, int _j) const { return (this->n + 1) * _i + _j; }
+    int IdxG(int _i, int _j) const { return this->n * _i + _j; }
+
     T KKTNorm(const std::vector<T>& _x, const std::vector<T>& _y, T _z,
               const std::vector<T>& _lambda, const std::vector<T>& _gsi,
               const std::vector<T>& _ita, const std::vector<T>& _mu, T _zeta,
@@ -686,40 +703,6 @@ class MMA {
 
         return sqrt(norm);
     }
-
-    //----------Parameters for solver----------
-    T epsvalue;  //  Convergence parameter of objective value
-
-    //----------Parameters for MMA----------
-    T raa0;     //  Used in equation(3.3) and (3.4)
-    T albefa;   //  Used in equation(3.6) and (3.7)
-    T move;     //  Used in equation(3.6) and (3.7)
-    T asyinit;  //  Used in equation(3.11)
-    T asydecr;  //  Used in equation(3.13)
-    T asyincr;  //  Used in equation(3.13)
-
-   private:
-    //----------Parameters for solver----------
-    int k;                //  Counter for outer loop
-    const int n;          //  Number of design variables
-    const int m;          //  Number of constraint
-    T previousvalue;      //  Previous function value
-    std::vector<T> xmin;  //  Minimum value of design variable
-    std::vector<T> xmax;  //  Maximum value of design variable
-    std::vector<T> xkm2;  //  k-2 th value of design variable
-    std::vector<T> xkm1;  //  k-1 th value of design variable
-
-    //----------Parameters for MMA----------
-    T a0;              //  Used in equation(3.1)
-    std::vector<T> a;  //  Used in equation(3.1)
-    std::vector<T> c;  //  Used in equation(3.1)
-    std::vector<T> d;  //  Used in equation(3.1)
-    std::vector<T> L;  //  Parameter of asymptotes
-    std::vector<T> U;  //  Parameter of asymptotes
-
-    int IdxAm(int _i, int _j) const { return (this->m + 1) * _i + _j; }
-    int IdxAn(int _i, int _j) const { return (this->n + 1) * _i + _j; }
-    int IdxG(int _i, int _j) const { return this->n * _i + _j; }
 
     template <class F>
     static std::vector<T> gauss(std::vector<T> _A, std::vector<T> _b, F _idx) {
