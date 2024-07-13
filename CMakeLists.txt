@@ -17,6 +17,7 @@ add_executable(
     test/primaldual_test.cpp
     test/slp_test.cpp
     test/mma_test.cpp
+    test/lsm_test.cpp
 )
 target_link_libraries(PANSOPTTest gtest_main)
 
