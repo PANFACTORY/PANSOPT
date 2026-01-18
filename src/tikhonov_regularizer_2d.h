@@ -8,9 +8,9 @@
 
 namespace PANSOPT {
 template <class T>
-class TikhonovRegularizer {
+class TikhonovRegularizer2D {
    public:
-    TikhonovRegularizer(int nx, int ny, T tau, T dt)
+    TikhonovRegularizer2D(int nx, int ny, T tau, T dt)
         : nx(nx),
           ny(ny),
           nxy(nx * ny),
@@ -54,8 +54,8 @@ class TikhonovRegularizer {
         this->K = utility::CSR<T>(tmp_K);
     }
 
-    TikhonovRegularizer(const TikhonovRegularizer<T>&) = delete;
-    ~TikhonovRegularizer() {}
+    TikhonovRegularizer2D(const TikhonovRegularizer2D<T>&) = delete;
+    ~TikhonovRegularizer2D() {}
 
     std::vector<T> gradient(const std::vector<T>& s_t,
                             const std::vector<T>& df) {
