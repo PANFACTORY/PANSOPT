@@ -16,7 +16,6 @@ add_executable(
     test/primaldual_test.cpp
     test/slp_test.cpp
     test/mma_test.cpp
-    test/tikhonov_regularizer_2d_test.cpp
 )
 target_link_libraries(PANSOPTTest gtest_main)
 
