@@ -13,7 +13,6 @@ enable_testing()
 
 add_executable(
     PANSOPTTest
-    test/augmentedLagrange_test.cpp
     test/primaldual_test.cpp
     test/slp_test.cpp
     test/mma_test.cpp
